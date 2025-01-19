@@ -71,14 +71,14 @@ pipeline {
 }
     
         
-       stage('Build Docker Image') {
+       /*stage('Build Docker Image') {
             steps {
                 script {
                     def localImageName = "${IMAGE_NAME}:${BUILD_NUMBER}"
                     sh "docker build -t ${localImageName} ."
                 }
             }
-        }
+        }*/
           /*stage('Push to ECR') {
             steps {
                 script {
