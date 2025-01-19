@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copier le code source
-COPY . .
+COPY LoanPridiction/ .
 
 # Exposer le port 80
 EXPOSE 80

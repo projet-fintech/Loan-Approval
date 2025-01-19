@@ -31,14 +31,15 @@ pipeline {
             }
         }
         
-        /*stage('Run Unit Tests') {
-            steps {
-                 script {
-                      // Executer les tests unitaires en python
-                      sh "pytest"
-                }
-             }
-        }*/
+        /* stage('Run Unit Tests') {
+     steps {
+        script {
+           sh """
+              . venv/bin/activate
+              python3 -m pytest
+            """
+         }
+      }*/
         
        stage('Build Docker Image') {
             steps {
