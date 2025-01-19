@@ -7,6 +7,9 @@ pipeline {
         AWS_REGION = 'eu-west-3'
         ECR_REGISTRY = '329599629502.dkr.ecr.eu-west-3.amazonaws.com'
         IMAGE_NAME = "loanaproval" 
+        COMPONENT_NAME = 'LoanApproval'
+        SONAR_TOKEN = '39cc334a0a13dc54d616ab48a6949fae534f6b15'
+        SONAR_HOST = 'http://192.168.0.147:9000'
     }
     stages {
         stage('Checkout') {
@@ -30,16 +33,43 @@ pipeline {
                  }
             }
         }
-        
-        /* stage('Run Unit Tests') {
-     steps {
-        script {
-           sh """
-              . venv/bin/activate
-              python3 -m pytest
-            """
-         }
-      }*/
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarqube') {
+                        sh """
+                        mvn sonar:sonar -X \
+                            -Dsonar.projectKey=${COMPONENT_NAME}-project \
+                            -Dsonar.sources=src/main/java \
+                            -Dsonar.tests=src/test/java \
+                            -Dsonar.java.binaries=target/classes \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                            -Dsonar.host.url=${env.SONAR_HOST} \
+                            -Dsonar.login=${env.SONAR_TOKEN}
+                        """
+                    }
+                }
+            }
+        }
+
+         steps {
+            script {
+                // Installer les dépendances Python et pytest
+                sh '''
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install -r requirements.txt
+                    pip install pytest
+                '''
+                // Exécuter les tests unitaires
+                sh '''
+                    source venv/bin/activate
+                    cd LoanPridiction
+                    pytest test_app.py -v
+                '''
+            }
+}
+    
         
        stage('Build Docker Image') {
             steps {
@@ -49,7 +79,7 @@ pipeline {
                 }
             }
         }
-          stage('Push to ECR') {
+          /*stage('Push to ECR') {
             steps {
                 script {
                     withCredentials([aws(credentialsId: 'aws-credentials')]) {
@@ -91,7 +121,7 @@ pipeline {
                     """
                 }
             }
-        }
+        }*/
     }
    post {
         failure {
