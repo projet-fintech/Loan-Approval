@@ -24,66 +24,57 @@ pipeline {
 
         stage('Prepare Environment') {
             steps {
-                 script {
-                   sh """
+                script {
+                    sh """
                         python3 -m venv venv
                         . venv/bin/activate
-                        python3 -m pip install -r requirements.txt
-                   """
-                 }
+                        pip install -r requirements.txt
+                    """
+                }
             }
         }
+
+        stage('Run Unit Tests') {
+            steps {
+                script {
+                    sh """
+                        . venv/bin/activate
+                        cd LoanPrediction  // Correction du chemin
+                        pytest test_app.py -v
+                    """
+                }
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('sonarqube') {
                         sh """
-                        mvn sonar:sonar -X \
-                            -Dsonar.projectKey=${COMPONENT_NAME}-project \
-                            -Dsonar.sources=src/main/java \
-                            -Dsonar.tests=src/test/java \
-                            -Dsonar.java.binaries=target/classes \
-                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-                            -Dsonar.host.url=${env.SONAR_HOST} \
-                            -Dsonar.login=${env.SONAR_TOKEN}
+                            sonar-scanner \
+                                -Dsonar.projectKey=${COMPONENT_NAME}-project \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=${env.SONAR_HOST} \
+                                -Dsonar.login=${env.SONAR_TOKEN}
                         """
                     }
                 }
             }
         }
 
-         steps {
-            script {
-                // Installer les dépendances Python et pytest
-                sh '''
-                    python3 -m venv venv
-                    source venv/bin/activate
-                    pip install -r requirements.txt
-                    pip install pytest
-                '''
-                // Exécuter les tests unitaires
-                sh '''
-                    source venv/bin/activate
-                    cd LoanPridiction
-                    pytest test_app.py -v
-                '''
-            }
-}
-    
-        
-       /*stage('Build Docker Image') {
+        /*stage('Build Docker Image') {
             steps {
                 script {
                     def localImageName = "${IMAGE_NAME}:${BUILD_NUMBER}"
                     sh "docker build -t ${localImageName} ."
                 }
             }
-        }*/
-          /*stage('Push to ECR') {
+        }
+*/
+        /*stage('Push to ECR') {
             steps {
                 script {
                     withCredentials([aws(credentialsId: 'aws-credentials')]) {
-                        
                         def awsCredentials = "-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}"
                         
                         docker.image('amazon/aws-cli').inside("--entrypoint='' ${awsCredentials}") {
@@ -110,8 +101,9 @@ pipeline {
                     }
                 }
             }
-        }
-      stage('Cleanup') {
+        }*/
+
+        stage('Cleanup') {
             steps {
                 script {
                     sh """
@@ -121,9 +113,9 @@ pipeline {
                     """
                 }
             }
-        }*/
+        }
     }
-   post {
+    post {
         failure {
             echo 'Pipeline failed! Cleaning up...'
             sh 'rm -f ecr_password.txt || true'
