@@ -39,7 +39,7 @@ pipeline {
                 script {
                     sh """
                         . venv/bin/activate
-                        cd LoanPrediction  // Correction du chemin
+                        cd LoanPridiction  // Correction du chemin
                         pytest test_app.py -v
                     """
                 }
