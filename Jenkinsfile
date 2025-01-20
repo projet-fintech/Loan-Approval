@@ -64,7 +64,7 @@ pipeline {
             }
         }
 
-        /*stage('Build Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 script {
                     def localImageName = "${IMAGE_NAME}:${BUILD_NUMBER}"
@@ -72,8 +72,7 @@ pipeline {
                 }
             }
         }
-*/
-        /*stage('Push to ECR') {
+        stage('Push to ECR') {
             steps {
                 script {
                     withCredentials([aws(credentialsId: 'aws-credentials')]) {
@@ -103,8 +102,26 @@ pipeline {
                     }
                 }
             }
-        }*/
-
+        }
+stage('Deploy to EKS') {
+            steps {
+                script {
+                   withCredentials([aws(credentialsId: 'aws-credentials')]) {
+                     
+                      //Authentification
+                        sh """
+                            aws eks update-kubeconfig --name main-eks-cluster --region ${AWS_REGION} 
+                        """
+                       // Déploiement des ressources
+                        sh """
+                          kubectl apply -f k8s/loan_model_deployement.yaml
+                           
+                           kubectl apply -f k8s/loan_model_service.yaml
+                        """
+                    }
+                }
+            }
+        }
         stage('Cleanup') {
             steps {
                 script {
